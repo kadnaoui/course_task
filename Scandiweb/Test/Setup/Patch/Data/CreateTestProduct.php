@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 
 namespace Scandiweb\Test\Setup\Patch\Data;
 
@@ -78,8 +79,9 @@ class CreateTestProduct implements DataPatchInterface
      * @param SourceItemsSaveInterface $sourceItemsSaveInterface
      * @param State $appState
      * @param StoreManagerInterface $storeManager
-	 * @param EavSetup $eavSetup
+     * @param EavSetup $eavSetup
      * @param CategoryLinkManagementInterface $categoryLink
+     * @param CategoryCollectionFactory $categoryCollectionFactory
      */
     public function __construct(
         ProductInterfaceFactory $productInterfaceFactory,
@@ -87,19 +89,19 @@ class CreateTestProduct implements DataPatchInterface
         State $appState,
         StoreManagerInterface $storeManager,
         EavSetup $eavSetup,
-		SourceItemInterfaceFactory $sourceItemFactory,
+        SourceItemInterfaceFactory $sourceItemFactory,
         SourceItemsSaveInterface $sourceItemsSaveInterface,
-		CategoryLinkManagementInterface $categoryLink,
+        CategoryLinkManagementInterface $categoryLink,
         CategoryCollectionFactory $categoryCollectionFactory
     ) {
         $this->appState = $appState;
         $this->productInterfaceFactory = $productInterfaceFactory;
         $this->productRepository = $productRepository;
-		$this->eavSetup = $eavSetup;
+        $this->eavSetup = $eavSetup;
         $this->storeManager = $storeManager;
         $this->sourceItemFactory = $sourceItemFactory;
         $this->sourceItemsSaveInterface = $sourceItemsSaveInterface;
-		$this->categoryLink = $categoryLink;
+        $this->categoryLink = $categoryLink;
         $this->categoryCollectionFactory = $categoryCollectionFactory;
     }
 
@@ -128,16 +130,22 @@ class CreateTestProduct implements DataPatchInterface
 
         $attributeSetId = $this->eavSetup->getAttributeSetId(Product::ENTITY, 'Default');
         $websiteIDs = [$this->storeManager->getStore()->getWebsiteId()];
-			$product->setTypeId(Type::TYPE_SIMPLE)
+
+        $product->setTypeId(Type::TYPE_SIMPLE)
             ->setWebsiteIds($websiteIDs)
             ->setAttributeSetId($attributeSetId)
             ->setName('Test Product')
-			->setUrlKey('testproduct')
+            ->setUrlKey('testproduct')
             ->setSku('test-product')
             ->setPrice(0.99)
             ->setVisibility(Visibility::VISIBILITY_BOTH)
             ->setStatus(Status::STATUS_ENABLED)
-            ->setStockData(['use_config_manage_stock' => 1, 'is_qty_decimal' => 0, 'is_in_stock' => 1]);
+            ->setStockData([
+                'use_config_manage_stock' => 1,
+                'is_qty_decimal' => 0,
+                'is_in_stock' => 1
+            ]);
+
         $product = $this->productRepository->save($product);
 
         $sourceItem = $this->sourceItemFactory->create();
@@ -153,6 +161,7 @@ class CreateTestProduct implements DataPatchInterface
         $categoryIds = $this->categoryCollectionFactory->create()
             ->addAttributeToFilter('name', ['in' => $categoryTitles])
             ->getAllIds();
+
         $this->categoryLink->assignProductToCategories($product->getSku(), $categoryIds);
     }
 
